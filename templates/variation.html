@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Variations</h2>
+<form method="post" class="row g-3 mb-3">
+  <div class="col-md-4">
+    <select name="species_id" class="form-select" required>
+      <option value="">Species</option>
+      {% for s in species %}
+      <option value="{{ s.id }}">{{ s.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <input type="text" class="form-control" name="name" placeholder="Variation" required>
+  </div>
+  <div class="col-md-3">
+    <input type="number" step="0.01" class="form-control" name="price" placeholder="Price/kg" required>
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-primary">Add</button>
+  </div>
+</form>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Species</th>
+      <th>Variation</th>
+      <th>Price/kg</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for v in variations %}
+    <tr>
+      <td>{{ v.species.name }}</td>
+      <td>{{ v.name }}</td>
+      <td>{{ '%.2f'|format(v.price_per_kg) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
