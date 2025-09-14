@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash
 from database import db
 from models import Species, Variation, Inventory, Sale
@@ -16,8 +17,19 @@ with app.app_context():
 
 @app.route('/')
 def dashboard():
-    sales = Sale.query.all()
+    start = request.args.get('start')
+    end = request.args.get('end')
+    sales_query = Sale.query
+    if start:
+        start_dt = datetime.fromisoformat(start)
+        sales_query = sales_query.filter(Sale.timestamp >= start_dt)
+    if end:
+        end_dt = datetime.fromisoformat(end) + timedelta(days=1)
+        sales_query = sales_query.filter(Sale.timestamp < end_dt)
+    sales = sales_query.order_by(Sale.timestamp.desc()).all()
     total_profit = sum(s.profit for s in sales)
+
+    # Profit by (species, purchase variation -> sold variation)
     mapping_totals = {}
     for s in sales:
         key = (s.species.name, s.purchase_variation.name, s.sold_variation.name)
@@ -25,7 +37,21 @@ def dashboard():
         data['weight'] += s.weight_kg
         data['revenue'] += s.revenue
         data['profit'] += s.profit
-    return render_template('dashboard.html', total_profit=total_profit, mapping_totals=mapping_totals)
+
+    # Current stock by (species, purchase variation)
+    stock_totals = {}
+    for inv in Inventory.query.all():
+        key = (inv.variation.species.name, inv.variation.name)
+        stock_totals[key] = stock_totals.get(key, 0) + inv.weight_kg
+
+    return render_template(
+        'dashboard.html',
+        total_profit=total_profit,
+        mapping_totals=mapping_totals,
+        stock_totals=stock_totals,
+        start=start,
+        end=end,
+    )
 
 
 @app.route('/species', methods=['GET', 'POST'])
@@ -64,13 +90,20 @@ def add_inventory():
         variation_id = request.form.get('variation_id')
         weight = request.form.get('weight')
         cost = request.form.get('cost')
+        date = request.form.get('date')
         if variation_id and weight and cost:
-            inv = Inventory(variation_id=variation_id, weight_kg=float(weight), cost_per_kg=float(cost))
+            ts = datetime.fromisoformat(date) if date else datetime.utcnow()
+            inv = Inventory(
+                variation_id=variation_id,
+                weight_kg=float(weight),
+                cost_per_kg=float(cost),
+                timestamp=ts,
+            )
             db.session.add(inv)
             db.session.commit()
             flash('Inventory recorded')
         return redirect(url_for('add_inventory'))
-    inventory = Inventory.query.all()
+    inventory = Inventory.query.order_by(Inventory.timestamp.desc()).all()
     return render_template('inventory.html', variations=variations, inventory=inventory)
 
 
@@ -82,19 +115,25 @@ def add_sale():
         sold_variation_id = request.form.get('sold_variation_id')
         weight = request.form.get('weight')
         price = request.form.get('price')
+        date = request.form.get('date')  # <-- keep the date from the form
+
         if purchase_variation_id and sold_variation_id and weight and price:
             cost_per_kg = consume_inventory_cost(int(purchase_variation_id), float(weight))
             if cost_per_kg is None:
                 flash('Insufficient inventory')
             else:
-                purchase_variation = Variation.query.get(purchase_variation_id)
+                # use provided date if available, else now
+                ts = datetime.fromisoformat(date) if date else datetime.utcnow()
+
+                purchase_variation = Variation.query.get(int(purchase_variation_id))
                 sale = Sale(
                     species_id=purchase_variation.species_id,
-                    purchase_variation_id=purchase_variation_id,
-                    sold_variation_id=sold_variation_id,
+                    purchase_variation_id=int(purchase_variation_id),
+                    sold_variation_id=int(sold_variation_id),
                     weight_kg=float(weight),
                     sale_price_per_kg=float(price),
                     cost_per_kg=cost_per_kg,
+                    timestamp=ts,
                 )
                 db.session.add(sale)
                 db.session.commit()
@@ -107,6 +146,8 @@ def add_sale():
 
 
 def consume_inventory_cost(variation_id: int, weight_needed: float):
+    """Deduct inventory for a sale and return the weighted average cost per kg.
+    Returns None if there isn't enough stock for the requested weight."""
     inventory_items = (
         Inventory.query.filter_by(variation_id=variation_id)
         .order_by(Inventory.id)
@@ -115,6 +156,7 @@ def consume_inventory_cost(variation_id: int, weight_needed: float):
     total_available = sum(item.weight_kg for item in inventory_items)
     if total_available < weight_needed:
         return None
+
     remaining = weight_needed
     total_cost = 0.0
     for item in inventory_items:
@@ -126,6 +168,7 @@ def consume_inventory_cost(variation_id: int, weight_needed: float):
         remaining -= used
         if item.weight_kg == 0:
             db.session.delete(item)
+
     return total_cost / weight_needed
 
 

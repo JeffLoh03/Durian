@@ -26,6 +26,7 @@ class Inventory(db.Model):
     variation_id = db.Column(db.Integer, db.ForeignKey('variation.id'), nullable=False)
     weight_kg = db.Column(db.Float, nullable=False)
     cost_per_kg = db.Column(db.Float, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     variation = db.relationship('Variation')
 
