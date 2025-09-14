@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Species</h2>
+<form method="post" class="row g-3 mb-3">
+  <div class="col-auto">
+    <input type="text" class="form-control" name="name" placeholder="Species name" required>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary mb-3">Add</button>
+  </div>
+</form>
+<ul class="list-group">
+  {% for s in species %}
+  <li class="list-group-item">{{ s.name }}</li>
+  {% endfor %}
+</ul>
+{% endblock %}

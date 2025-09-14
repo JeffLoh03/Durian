@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Sales</h2>
+<form method="post" class="row g-3 mb-3">
+  <div class="col-md-3">
+    <select name="purchase_variation_id" class="form-select" required>
+      <option value="">Purchased As</option>
+      {% for v in variations %}
+      <option value="{{ v.id }}">{{ v.species.name }} - {{ v.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select name="sold_variation_id" class="form-select" required>
+      <option value="">Sold As</option>
+      {% for v in variations %}
+      <option value="{{ v.id }}">{{ v.species.name }} - {{ v.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <input type="number" step="0.01" class="form-control" name="weight" placeholder="Weight kg" required>
+  </div>
+  <div class="col-md-2">
+    <input type="number" step="0.01" class="form-control" name="cost" placeholder="Cost/kg" required>
+  </div>
+  <div class="col-md-2">
+    <input type="number" step="0.01" class="form-control" name="price" placeholder="Price/kg" required>
+  </div>
+  <div class="col-md-12">
+    <button type="submit" class="btn btn-primary">Record Sale</button>
+  </div>
+</form>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Purchased As</th>
+      <th>Sold As</th>
+      <th>Weight kg</th>
+      <th>Cost/kg</th>
+      <th>Price/kg</th>
+      <th>Profit</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in sales %}
+    <tr>
+      <td>{{ s.purchase_variation.name }}</td>
+      <td>{{ s.sold_variation.name }}</td>
+      <td>{{ '%.2f'|format(s.weight_kg) }}</td>
+      <td>{{ '%.2f'|format(s.cost_per_kg) }}</td>
+      <td>{{ '%.2f'|format(s.sale_price_per_kg) }}</td>
+      <td>{{ '%.2f'|format(s.profit) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

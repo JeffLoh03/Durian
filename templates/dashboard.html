@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Dashboard</h2>
+<p>Total Profit: {{ '%.2f'|format(total_profit) }}</p>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Species</th>
+      <th>Purchased As</th>
+      <th>Sold As</th>
+      <th>Kg</th>
+      <th>Revenue</th>
+      <th>Profit</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for key, data in mapping_totals.items() %}
+    <tr>
+      <td>{{ key[0] }}</td>
+      <td>{{ key[1] }}</td>
+      <td>{{ key[2] }}</td>
+      <td>{{ '%.2f'|format(data.weight) }}</td>
+      <td>{{ '%.2f'|format(data.revenue) }}</td>
+      <td>{{ '%.2f'|format(data.profit) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
