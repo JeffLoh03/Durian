@@ -138,6 +138,8 @@ def add_sale():
 
 
 def consume_inventory_cost(variation_id: int, weight_needed: float):
+    """Deduct inventory for a sale and return the weighted average cost per kg.
+    Returns None if there isn't enough stock for the requested weight."""
     inventory_items = (
         Inventory.query.filter_by(variation_id=variation_id)
         .order_by(Inventory.id)

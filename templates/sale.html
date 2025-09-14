@@ -38,7 +38,6 @@
       <th>Purchased As</th>
       <th>Sold As</th>
       <th>Weight kg</th>
-      <th>Cost/kg</th>
       <th>Price/kg</th>
       <th>Profit</th>
     </tr>
@@ -50,7 +49,6 @@
       <td>{{ s.purchase_variation.name }}</td>
       <td>{{ s.sold_variation.name }}</td>
       <td>{{ '%.2f'|format(s.weight_kg) }}</td>
-      <td>{{ '%.2f'|format(s.cost_per_kg) }}</td>
       <td>{{ '%.2f'|format(s.sale_price_per_kg) }}</td>
       <td>{{ '%.2f'|format(s.profit) }}</td>
     </tr>
