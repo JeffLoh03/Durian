@@ -14,7 +14,6 @@ class Variation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     species_id = db.Column(db.Integer, db.ForeignKey('species.id'), nullable=False)
     name = db.Column(db.String(50), nullable=False)
-    price_per_kg = db.Column(db.Float, nullable=False)
 
     species = db.relationship('Species', backref=db.backref('variations', lazy=True))
 
