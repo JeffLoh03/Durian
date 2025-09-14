@@ -115,7 +115,7 @@ def add_sale():
         sold_variation_id = request.form.get('sold_variation_id')
         weight = request.form.get('weight')
         price = request.form.get('price')
-        date = request.form.get('date')  # <-- keep the date from the form
+        date = request.form.get('date')  # keep the date from the form
 
         if purchase_variation_id and sold_variation_id and weight and price:
             cost_per_kg = consume_inventory_cost(int(purchase_variation_id), float(weight))
