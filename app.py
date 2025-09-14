@@ -47,9 +47,8 @@ def add_variation():
     if request.method == 'POST':
         species_id = request.form.get('species_id')
         name = request.form.get('name')
-        price = request.form.get('price')
-        if species_id and name and price:
-            variation = Variation(species_id=species_id, name=name, price_per_kg=float(price))
+        if species_id and name:
+            variation = Variation(species_id=species_id, name=name)
             db.session.add(variation)
             db.session.commit()
             flash('Variation added')
