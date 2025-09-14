@@ -1,8 +1,19 @@
 {% extends 'base.html' %}
 {% block content %}
 <h2>Dashboard</h2>
+<form method="get" class="row g-3 mb-3">
+  <div class="col-md-3">
+    <input type="date" class="form-control" name="start" value="{{ start }}" placeholder="Start date">
+  </div>
+  <div class="col-md-3">
+    <input type="date" class="form-control" name="end" value="{{ end }}" placeholder="End date">
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-primary">Filter</button>
+  </div>
+</form>
 <p>Total Profit: {{ '%.2f'|format(total_profit) }}</p>
-<table class="table table-striped">
+<table class="table table-striped mb-4">
   <thead>
     <tr>
       <th>Species</th>
@@ -22,6 +33,26 @@
       <td>{{ '%.2f'|format(data.weight) }}</td>
       <td>{{ '%.2f'|format(data.revenue) }}</td>
       <td>{{ '%.2f'|format(data.profit) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>Stock Remaining</h3>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Species</th>
+      <th>Variation</th>
+      <th>Kg</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for key, weight in stock_totals.items() %}
+    <tr>
+      <td>{{ key[0] }}</td>
+      <td>{{ key[1] }}</td>
+      <td>{{ '%.2f'|format(weight) }}</td>
     </tr>
     {% endfor %}
   </tbody>
