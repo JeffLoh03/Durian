@@ -82,26 +82,52 @@ def add_sale():
         purchase_variation_id = request.form.get('purchase_variation_id')
         sold_variation_id = request.form.get('sold_variation_id')
         weight = request.form.get('weight')
-        cost = request.form.get('cost')
         price = request.form.get('price')
-        if purchase_variation_id and sold_variation_id and weight and cost and price:
-            purchase_variation = Variation.query.get(purchase_variation_id)
-            sale = Sale(
-                species_id=purchase_variation.species_id,
-                purchase_variation_id=purchase_variation_id,
-                sold_variation_id=sold_variation_id,
-                weight_kg=float(weight),
-                sale_price_per_kg=float(price),
-                cost_per_kg=float(cost),
-            )
-            db.session.add(sale)
-            db.session.commit()
-            generate_receipt(sale)
-            sync_sale_to_google_sheets(sale)
-            flash('Sale recorded')
+        if purchase_variation_id and sold_variation_id and weight and price:
+            cost_per_kg = consume_inventory_cost(int(purchase_variation_id), float(weight))
+            if cost_per_kg is None:
+                flash('Insufficient inventory')
+            else:
+                purchase_variation = Variation.query.get(purchase_variation_id)
+                sale = Sale(
+                    species_id=purchase_variation.species_id,
+                    purchase_variation_id=purchase_variation_id,
+                    sold_variation_id=sold_variation_id,
+                    weight_kg=float(weight),
+                    sale_price_per_kg=float(price),
+                    cost_per_kg=cost_per_kg,
+                )
+                db.session.add(sale)
+                db.session.commit()
+                generate_receipt(sale)
+                sync_sale_to_google_sheets(sale)
+                flash('Sale recorded')
         return redirect(url_for('add_sale'))
     sales = Sale.query.order_by(Sale.timestamp.desc()).all()
     return render_template('sale.html', variations=variations, sales=sales)
+
+
+def consume_inventory_cost(variation_id: int, weight_needed: float):
+    inventory_items = (
+        Inventory.query.filter_by(variation_id=variation_id)
+        .order_by(Inventory.id)
+        .all()
+    )
+    total_available = sum(item.weight_kg for item in inventory_items)
+    if total_available < weight_needed:
+        return None
+    remaining = weight_needed
+    total_cost = 0.0
+    for item in inventory_items:
+        if remaining <= 0:
+            break
+        used = min(item.weight_kg, remaining)
+        total_cost += used * item.cost_per_kg
+        item.weight_kg -= used
+        remaining -= used
+        if item.weight_kg == 0:
+            db.session.delete(item)
+    return total_cost / weight_needed
 
 
 def generate_receipt(sale: Sale):
