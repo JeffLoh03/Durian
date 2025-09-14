@@ -10,9 +10,7 @@ app.config['SECRET_KEY'] = 'dev'
 
 db.init_app(app)
 
-
-@app.before_first_request
-def create_tables():
+with app.app_context():
     db.create_all()
 
 
